@@ -18,3 +18,6 @@ Afterwars you can include Credits as a dependency in your maven project
     <version>1.0-SNAPSHOT</version>
 </dependency>
 ```
+
+## Todos
+This library is still in development. Don´t use it in production mode without testing everything by yourself.
