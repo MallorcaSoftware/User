@@ -7,7 +7,7 @@ import com.mallorcasoftware.user.exception.UserAlreadyExistException;
 import com.mallorcasoftware.user.exception.UserNotFoundException;
 import com.mallorcasoftware.user.model.User;
 import com.mallorcasoftware.user.service.encoder.PasswordEncoder;
-import com.mallorcasoftware.user.service.mail.UserMailer;
+import com.mallorcasoftware.user.service.notification.UserNotificator;
 import com.mallorcasoftware.user.service.token.TokenGenerator;
 
 import java.util.Date;
@@ -19,7 +19,7 @@ public class UserService {
 
     private TokenGenerator tokenGenerator;
 
-    private UserMailer userMailer;
+    private UserNotificator userNotificator;
 
     private Integer passwordResetTokenTtl = 300;
 
@@ -31,7 +31,7 @@ public class UserService {
         user.setPassword(passwordEncoder.encode(user.getPassword()));
 
         userDao.save(user);
-        userMailer.sendUserRegistrationMail(user);
+        userNotificator.sendUserRegistrationNotification(user);
 
         return user;
     }
@@ -60,7 +60,7 @@ public class UserService {
 
         userDao.save(user);
 
-        userMailer.sendPasswordResetMail(user);
+        userNotificator.sendPasswordResetNotification(user);
     }
 
     public void passwordReset(String token, String password, String passwordConfirmation) throws UserNotFoundException, PasswordResetTokenNotValidException, PasswordConfirmationNotMatchException {
@@ -89,7 +89,7 @@ public class UserService {
 
         userDao.save(user);
 
-        userMailer.sendPasswordResetedMail(user);
+        userNotificator.sendPasswordResetedNotification(user);
     }
 
     public void changePassword(User user, String password, String passwordConfirmation) throws PasswordConfirmationNotMatchException {
