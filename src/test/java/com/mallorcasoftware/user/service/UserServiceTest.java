@@ -35,8 +35,14 @@ public class UserServiceTest extends BaseTest {
     @Mock
     private UserNotificator userNotificator;
 
-    @InjectMocks
     private UserService userService;
+
+    @Override
+    public void initMocks() {
+        super.initMocks();
+
+        userService = new UserService(userDao, passwordEncoder, tokenGenerator, userNotificator, 300);
+    }
 
     @Test(expected = UserAlreadyExistException.class)
     public void shouldThrowUserAlreadyExistExceptionIfCreatesDuplicateUser() throws UserAlreadyExistException {

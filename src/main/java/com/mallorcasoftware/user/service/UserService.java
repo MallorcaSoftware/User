@@ -23,6 +23,21 @@ public class UserService {
 
     private Integer passwordResetTokenTtl = 300;
 
+    public UserService(UserDao userDao, PasswordEncoder passwordEncoder, TokenGenerator tokenGenerator, UserNotificator userNotificator) {
+        this.userDao = userDao;
+        this.passwordEncoder = passwordEncoder;
+        this.tokenGenerator = tokenGenerator;
+        this.userNotificator = userNotificator;
+    }
+
+    public UserService(UserDao userDao, PasswordEncoder passwordEncoder, TokenGenerator tokenGenerator, UserNotificator userNotificator, Integer passwordResetTokenTtl) {
+        this.userDao = userDao;
+        this.passwordEncoder = passwordEncoder;
+        this.tokenGenerator = tokenGenerator;
+        this.userNotificator = userNotificator;
+        this.passwordResetTokenTtl = passwordResetTokenTtl;
+    }
+
     public User createUser(User user) throws UserAlreadyExistException {
         if (userDao.findByUsername(user.getUsername()) != null) {
             throw new UserAlreadyExistException();
