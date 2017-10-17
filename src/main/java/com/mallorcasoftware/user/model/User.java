@@ -4,7 +4,7 @@ import java.util.Date;
 import java.util.Locale;
 
 public class User {
-    private Long id;
+    private long id;
 
     private String username;
 
@@ -18,11 +18,11 @@ public class User {
 
     private Locale locale;
 
-    public Long getId() {
+    public long getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(long id) {
         this.id = id;
     }
 
