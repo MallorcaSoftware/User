@@ -12,7 +12,6 @@ import com.mallorcasoftware.user.exception.UserNotFoundException;
 import com.mallorcasoftware.user.listener.UserListener;
 import com.mallorcasoftware.user.model.User;
 import com.mallorcasoftware.user.service.encoder.PasswordEncoder;
-import com.mallorcasoftware.user.service.notification.UserNotificator;
 import com.mallorcasoftware.user.service.token.TokenGenerator;
 
 import java.util.ArrayList;
@@ -26,32 +25,27 @@ public class UserService {
 
     private TokenGenerator tokenGenerator;
 
-    private UserNotificator userNotificator;
-
     private Integer passwordResetTokenTtl = 300;
 
     private List<UserListener> userListeners = new ArrayList<UserListener>();
 
-    public UserService(UserDao userDao, PasswordEncoder passwordEncoder, TokenGenerator tokenGenerator, UserNotificator userNotificator) {
+    public UserService(UserDao userDao, PasswordEncoder passwordEncoder, TokenGenerator tokenGenerator) {
         this.userDao = userDao;
         this.passwordEncoder = passwordEncoder;
         this.tokenGenerator = tokenGenerator;
-        this.userNotificator = userNotificator;
     }
 
-    public UserService(UserDao userDao, PasswordEncoder passwordEncoder, TokenGenerator tokenGenerator, UserNotificator userNotificator, Integer passwordResetTokenTtl) {
+    public UserService(UserDao userDao, PasswordEncoder passwordEncoder, TokenGenerator tokenGenerator, Integer passwordResetTokenTtl) {
         this.userDao = userDao;
         this.passwordEncoder = passwordEncoder;
         this.tokenGenerator = tokenGenerator;
-        this.userNotificator = userNotificator;
         this.passwordResetTokenTtl = passwordResetTokenTtl;
     }
 
-    public UserService(UserDao userDao, PasswordEncoder passwordEncoder, TokenGenerator tokenGenerator, UserNotificator userNotificator, Integer passwordResetTokenTtl, List<UserListener> userListeners) {
+    public UserService(UserDao userDao, PasswordEncoder passwordEncoder, TokenGenerator tokenGenerator, Integer passwordResetTokenTtl, List<UserListener> userListeners) {
         this.userDao = userDao;
         this.passwordEncoder = passwordEncoder;
         this.tokenGenerator = tokenGenerator;
-        this.userNotificator = userNotificator;
         this.passwordResetTokenTtl = passwordResetTokenTtl;
         this.userListeners = userListeners;
     }
@@ -64,7 +58,6 @@ public class UserService {
         user.setPassword(passwordEncoder.encode(user.getPassword()));
 
         userDao.save(user);
-        userNotificator.sendUserRegistrationNotification(user);
 
         for (UserListener userListener : userListeners) {
             userListener.onCreateUser(new UserCreatedEvent(user));
@@ -97,8 +90,6 @@ public class UserService {
 
         userDao.save(user);
 
-        userNotificator.sendPasswordResetNotification(user);
-
         for (UserListener userListener : userListeners) {
             userListener.onRequestPasswordReset(new RequestPasswordResetEvent(user));
         }
@@ -130,8 +121,6 @@ public class UserService {
 
         userDao.save(user);
 
-        userNotificator.sendPasswordResetedNotification(user);
-
         for (UserListener userListener : userListeners) {
             userListener.onPasswordReset(new PasswordResetEvent(user));
         }
@@ -145,8 +134,6 @@ public class UserService {
         user.setPassword(passwordEncoder.encode(passwordConfirmation));
 
         userDao.save(user);
-
-        userNotificator.sendPasswordChangedNotification(user);
 
         for (UserListener userListener : userListeners) {
             userListener.onChangePassword(new PasswordChangedEvent(user));

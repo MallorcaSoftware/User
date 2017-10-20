@@ -2,16 +2,18 @@ package com.mallorcasoftware.user.service;
 
 import com.mallorcasoftware.user.BaseTest;
 import com.mallorcasoftware.user.dao.UserDao;
+import com.mallorcasoftware.user.event.PasswordResetEvent;
+import com.mallorcasoftware.user.event.RequestPasswordResetEvent;
+import com.mallorcasoftware.user.event.UserCreatedEvent;
 import com.mallorcasoftware.user.exception.PasswordConfirmationNotMatchException;
 import com.mallorcasoftware.user.exception.PasswordResetTokenNotValidException;
 import com.mallorcasoftware.user.exception.UserAlreadyExistException;
 import com.mallorcasoftware.user.exception.UserNotFoundException;
+import com.mallorcasoftware.user.listener.UserListener;
 import com.mallorcasoftware.user.model.User;
 import com.mallorcasoftware.user.service.encoder.PasswordEncoder;
-import com.mallorcasoftware.user.service.notification.UserNotificator;
 import com.mallorcasoftware.user.service.token.TokenGenerator;
 import org.junit.Test;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 
@@ -19,7 +21,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.*;
 
 public class UserServiceTest extends BaseTest {
@@ -33,7 +35,7 @@ public class UserServiceTest extends BaseTest {
     private TokenGenerator tokenGenerator;
 
     @Mock
-    private UserNotificator userNotificator;
+    private UserListener userListener;
 
     private UserService userService;
 
@@ -41,7 +43,8 @@ public class UserServiceTest extends BaseTest {
     public void initMocks() {
         super.initMocks();
 
-        userService = new UserService(userDao, passwordEncoder, tokenGenerator, userNotificator, 300);
+        userService = new UserService(userDao, passwordEncoder, tokenGenerator, 300);
+        userService.addUserListener(userListener);
     }
 
     @Test(expected = UserAlreadyExistException.class)
@@ -87,7 +90,7 @@ public class UserServiceTest extends BaseTest {
     }
 
     @Test
-    public void shouldSendNotificationOnCreateUser() throws UserAlreadyExistException {
+    public void shouldCallListenerOnCreateUser() throws UserAlreadyExistException {
         String expectedUsername = "testUsername";
         User user = Mockito.mock(User.class);
 
@@ -95,7 +98,7 @@ public class UserServiceTest extends BaseTest {
 
         userService.createUser(user);
 
-        verify(userNotificator, times(1)).sendUserRegistrationNotification(user);
+        verify(userListener, times(1)).onCreateUser(any(UserCreatedEvent.class));
     }
 
     @Test
@@ -165,7 +168,7 @@ public class UserServiceTest extends BaseTest {
     }
 
     @Test
-    public void shouldSendNotificationOnRequestPasswordReset() throws UserNotFoundException {
+    public void shouldCallListenerOnRequestPasswordReset() throws UserNotFoundException {
         String usernameOrEmail = "testMail";
         String expectedToken = "expectedToken";
         User expectedUser = Mockito.mock(User.class);
@@ -176,7 +179,7 @@ public class UserServiceTest extends BaseTest {
 
         userService.requestPasswordReset(usernameOrEmail);
 
-        verify(userNotificator, times(1)).sendPasswordResetNotification(expectedUser);
+        verify(userListener, times(1)).onRequestPasswordReset(any(RequestPasswordResetEvent.class));
     }
 
     @Test(expected = UserNotFoundException.class)
@@ -263,7 +266,7 @@ public class UserServiceTest extends BaseTest {
     }
 
     @Test
-    public void shouldSendNotificationOnPasswordReset() throws UserNotFoundException, PasswordConfirmationNotMatchException, PasswordResetTokenNotValidException {
+    public void shouldCallListenerOnPasswordReset() throws UserNotFoundException, PasswordConfirmationNotMatchException, PasswordResetTokenNotValidException {
         String token = "testToken";
         String password = "password";
         String passwordConfirmation = "password";
@@ -281,7 +284,7 @@ public class UserServiceTest extends BaseTest {
         verify(expectedUser, times(1)).setPassword(encodedPassword);
         verify(userDao, times(1)).findByPasswordResetToken(token);
         verify(userDao, times(1)).save(expectedUser);
-        verify(userNotificator, times(1)).sendPasswordResetedNotification(expectedUser);
+        verify(userListener, times(1)).onPasswordReset(any(PasswordResetEvent.class));
     }
 
     @Test(expected = PasswordConfirmationNotMatchException.class)
