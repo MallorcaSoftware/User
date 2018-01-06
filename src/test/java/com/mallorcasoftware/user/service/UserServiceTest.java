@@ -17,6 +17,7 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 
+import javax.validation.Validator;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -25,6 +26,10 @@ import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.*;
 
 public class UserServiceTest extends BaseTest {
+
+    @Mock
+    private Validator validator;
+
     @Mock
     private UserDao userDao;
 
@@ -43,7 +48,7 @@ public class UserServiceTest extends BaseTest {
     public void initMocks() {
         super.initMocks();
 
-        userService = new UserService(userDao, passwordEncoder, tokenGenerator, 300);
+        userService = new UserService(validator, userDao, passwordEncoder, tokenGenerator, 300);
         userService.addUserListener(userListener);
     }
 
@@ -69,6 +74,7 @@ public class UserServiceTest extends BaseTest {
 
         when(user.getUsername()).thenReturn(expectedUsername);
         when(user.getPassword()).thenReturn(expectedPassword);
+        when(user.getPlainPassword()).thenReturn(expectedPassword);
         when(passwordEncoder.encode(expectedPassword)).thenReturn(expectedEncodedPassword);
 
         userService.createUser(user);
@@ -253,6 +259,7 @@ public class UserServiceTest extends BaseTest {
         Date passwordRequestedAt = new Date();
         User expectedUser = Mockito.mock(User.class);
 
+        when(expectedUser.getPlainPassword()).thenReturn(passwordConfirmation);
         when(expectedUser.getPasswordResetToken()).thenReturn(token);
         when(expectedUser.getPasswordRequestedAt()).thenReturn(passwordRequestedAt);
         when(userDao.findByPasswordResetToken(token)).thenReturn(expectedUser);
@@ -274,6 +281,7 @@ public class UserServiceTest extends BaseTest {
         Date passwordRequestedAt = new Date();
         User expectedUser = Mockito.mock(User.class);
 
+        when(expectedUser.getPlainPassword()).thenReturn(passwordConfirmation);
         when(expectedUser.getPasswordResetToken()).thenReturn(token);
         when(expectedUser.getPasswordRequestedAt()).thenReturn(passwordRequestedAt);
         when(userDao.findByPasswordResetToken(token)).thenReturn(expectedUser);
@@ -303,10 +311,12 @@ public class UserServiceTest extends BaseTest {
         String passwordConfirmation = "password";
         String encodedPassword = "encodedPassword";
 
+        when(user.getPlainPassword()).thenReturn(passwordConfirmation);
         when(passwordEncoder.encode(password)).thenReturn(encodedPassword);
 
         userService.changePassword(user, password, passwordConfirmation);
 
+        verify(user, times(1)).setPlainPassword(passwordConfirmation);
         verify(user, times(1)).setPassword(encodedPassword);
         verify(userDao, times(1)).save(user);
     }

@@ -1,5 +1,7 @@
 package com.mallorcasoftware.user.model;
 
+import com.mallorcasoftware.user.validation.constraints.ValidPassword;
+
 import java.util.Date;
 import java.util.Locale;
 
@@ -11,6 +13,9 @@ public class User {
     private String email;
 
     private String password;
+
+    @ValidPassword
+    private String plainPassword;
 
     private String passwordResetToken;
 
@@ -48,6 +53,14 @@ public class User {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public String getPlainPassword() {
+        return plainPassword;
+    }
+
+    public void setPlainPassword(String plainPassword) {
+        this.plainPassword = plainPassword;
     }
 
     public String getPasswordResetToken() {
