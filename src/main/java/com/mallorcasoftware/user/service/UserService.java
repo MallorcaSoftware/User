@@ -14,11 +14,18 @@ import com.mallorcasoftware.user.model.User;
 import com.mallorcasoftware.user.service.encoder.PasswordEncoder;
 import com.mallorcasoftware.user.service.token.TokenGenerator;
 
+import javax.validation.ConstraintViolation;
+import javax.validation.ConstraintViolationException;
+import javax.validation.Validator;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 
 public class UserService {
+
+    private Validator validator;
+
     private UserDao userDao;
 
     private PasswordEncoder passwordEncoder;
@@ -29,20 +36,16 @@ public class UserService {
 
     private List<UserListener> userListeners = new ArrayList<UserListener>();
 
-    public UserService(UserDao userDao, PasswordEncoder passwordEncoder, TokenGenerator tokenGenerator) {
-        this.userDao = userDao;
-        this.passwordEncoder = passwordEncoder;
-        this.tokenGenerator = tokenGenerator;
-    }
-
-    public UserService(UserDao userDao, PasswordEncoder passwordEncoder, TokenGenerator tokenGenerator, Integer passwordResetTokenTtl) {
+    public UserService(Validator validator, UserDao userDao, PasswordEncoder passwordEncoder, TokenGenerator tokenGenerator, Integer passwordResetTokenTtl) {
+        this.validator = validator;
         this.userDao = userDao;
         this.passwordEncoder = passwordEncoder;
         this.tokenGenerator = tokenGenerator;
         this.passwordResetTokenTtl = passwordResetTokenTtl;
     }
 
-    public UserService(UserDao userDao, PasswordEncoder passwordEncoder, TokenGenerator tokenGenerator, Integer passwordResetTokenTtl, List<UserListener> userListeners) {
+    public UserService(Validator validator, UserDao userDao, PasswordEncoder passwordEncoder, TokenGenerator tokenGenerator, Integer passwordResetTokenTtl, List<UserListener> userListeners) {
+        this.validator = validator;
         this.userDao = userDao;
         this.passwordEncoder = passwordEncoder;
         this.tokenGenerator = tokenGenerator;
@@ -50,12 +53,14 @@ public class UserService {
         this.userListeners = userListeners;
     }
 
-    public User createUser(User user) throws UserAlreadyExistException {
+    public User createUser(User user) throws UserAlreadyExistException, ConstraintViolationException {
         if (userDao.findByUsername(user.getUsername()) != null) {
             throw new UserAlreadyExistException();
         }
 
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
+        validateUser(user);
+
+        user.setPassword(passwordEncoder.encode(user.getPlainPassword()));
 
         userDao.save(user);
 
@@ -117,7 +122,10 @@ public class UserService {
             throw new PasswordConfirmationNotMatchException();
         }
 
-        user.setPassword(passwordEncoder.encode(passwordConfirmation));
+        user.setPlainPassword(passwordConfirmation);
+
+        validateUser(user);
+        user.setPassword(passwordEncoder.encode(user.getPlainPassword()));
 
         userDao.save(user);
 
@@ -126,12 +134,14 @@ public class UserService {
         }
     }
 
-    public void changePassword(User user, String password, String passwordConfirmation) throws PasswordConfirmationNotMatchException {
+    public void changePassword(User user, String password, String passwordConfirmation) throws PasswordConfirmationNotMatchException, ConstraintViolationException {
         if (!password.equals(passwordConfirmation)) {
             throw new PasswordConfirmationNotMatchException();
         }
 
-        user.setPassword(passwordEncoder.encode(passwordConfirmation));
+        user.setPlainPassword(passwordConfirmation);
+        validateUser(user);
+        user.setPassword(passwordEncoder.encode(user.getPlainPassword()));
 
         userDao.save(user);
 
@@ -146,5 +156,12 @@ public class UserService {
 
     public void addUserListener(UserListener userListener) {
         userListeners.add(userListener);
+    }
+
+    private void validateUser(User user) throws ConstraintViolationException {
+        Set<ConstraintViolation<User>> constraintViolations = validator.validate(user);
+        if (!constraintViolations.isEmpty()) {
+            throw new ConstraintViolationException(constraintViolations);
+        }
     }
 }
