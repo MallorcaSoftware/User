@@ -41,17 +41,4 @@
         </dependency>
     </dependencies>
 
-    <distributionManagement>
-        <repository>
-            <id>central</id>
-            <name>d13b55f47c81-releases</name>
-            <url>http://artifactory.mallorca-software.com/artifactory/libs-release-local</url>
-        </repository>
-        <snapshotRepository>
-            <id>snapshots</id>
-            <name>d13b55f47c81-snapshots</name>
-            <url>http://artifactory.mallorca-software.com/artifactory/libs-snapshot-local</url>
-        </snapshotRepository>
-    </distributionManagement>
-
 </project>
