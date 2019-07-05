@@ -2,14 +2,16 @@ package com.mallorcasoftware.user.dao;
 
 import com.mallorcasoftware.user.model.User;
 
-public interface UserDao {
+import java.util.Optional;
+
+public interface UserDao<T extends User> {
     /**
      * Fetches user by given username.
      *
      * @param username username to fetch user
      * @return user or null
      */
-    User findByUsername(String username);
+    Optional<T> findByUsername(String username);
 
     /**
      * Fetches user by given username or given email
@@ -17,7 +19,7 @@ public interface UserDao {
      * @param value given value
      * @return user or null
      */
-    User findByUsernameOrEmail(String value);
+    Optional<T> findByUsernameOrEmail(String value);
 
     /**
      * Fetches user by given email.
@@ -25,7 +27,7 @@ public interface UserDao {
      * @param email email to fetch user
      * @return user or null
      */
-    User findByEmail(String email);
+    Optional<T> findByEmail(String email);
 
     /**
      * Fetches user by given id
@@ -33,7 +35,7 @@ public interface UserDao {
      * @param id to fetch user
      * @return user or null
      */
-    User findById(Long id);
+    Optional<T> findById(Long id);
 
     /**
      * Fetches user by given passwordResetToken
@@ -41,7 +43,7 @@ public interface UserDao {
      * @param passwordResetToken to for passwordReset
      * @return user or null
      */
-    User findByPasswordResetToken(String passwordResetToken);
+    Optional<T> findByPasswordResetToken(String passwordResetToken);
 
     /**
      * Saves the given user
@@ -49,5 +51,5 @@ public interface UserDao {
      * @param user the user to save
      * @return user or null
      */
-    User save(User user);
+    T save(T user);
 }

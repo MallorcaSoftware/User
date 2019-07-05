@@ -22,11 +22,11 @@ import java.util.Date;
 import java.util.List;
 import java.util.Set;
 
-public class UserService {
+public class UserService<T extends User> {
 
     private Validator validator;
 
-    private UserDao userDao;
+    private UserDao<T> userDao;
 
     private PasswordEncoder passwordEncoder;
 
@@ -36,7 +36,8 @@ public class UserService {
 
     private List<UserListener> userListeners = new ArrayList<UserListener>();
 
-    public UserService(Validator validator, UserDao userDao, PasswordEncoder passwordEncoder, TokenGenerator tokenGenerator, Integer passwordResetTokenTtl) {
+    public UserService(Validator validator, UserDao<T> userDao, PasswordEncoder passwordEncoder,
+                       TokenGenerator tokenGenerator, Integer passwordResetTokenTtl) {
         this.validator = validator;
         this.userDao = userDao;
         this.passwordEncoder = passwordEncoder;
@@ -44,7 +45,8 @@ public class UserService {
         this.passwordResetTokenTtl = passwordResetTokenTtl;
     }
 
-    public UserService(Validator validator, UserDao userDao, PasswordEncoder passwordEncoder, TokenGenerator tokenGenerator, Integer passwordResetTokenTtl, List<UserListener> userListeners) {
+    public UserService(Validator validator, UserDao<T> userDao, PasswordEncoder passwordEncoder,
+                       TokenGenerator tokenGenerator, Integer passwordResetTokenTtl, List<UserListener> userListeners) {
         this.validator = validator;
         this.userDao = userDao;
         this.passwordEncoder = passwordEncoder;
@@ -53,8 +55,8 @@ public class UserService {
         this.userListeners = userListeners;
     }
 
-    public User createUser(User user) throws UserAlreadyExistException, ConstraintViolationException {
-        if (userDao.findByUsername(user.getUsername()) != null) {
+    public T createUser(T user) throws UserAlreadyExistException, ConstraintViolationException {
+        if (userDao.findByUsername(user.getUsername()).isPresent()) {
             throw new UserAlreadyExistException();
         }
 
@@ -71,20 +73,20 @@ public class UserService {
         return user;
     }
 
-    public User findUser(Long id) {
-        return userDao.findById(id);
+    public T findUser(Long id) {
+        return userDao.findById(id).orElse(null);
     }
 
-    public User findUser(String username) {
-        return userDao.findByUsername(username);
+    public T findUser(String username) {
+        return userDao.findByUsername(username).orElse(null);
     }
 
-    public User findUserByUsernameOrEmail(String value) {
-        return userDao.findByUsernameOrEmail(value);
+    public T findUserByUsernameOrEmail(String value) {
+        return userDao.findByUsernameOrEmail(value).orElse(null);
     }
 
     public void requestPasswordReset(String usernameOrEmail) throws UserNotFoundException {
-        User user = userDao.findByUsernameOrEmail(usernameOrEmail);
+        T user = userDao.findByUsernameOrEmail(usernameOrEmail).orElse(null);
 
         if (user == null) {
             throw new UserNotFoundException();
@@ -101,7 +103,7 @@ public class UserService {
     }
 
     public void passwordReset(String token, String password, String passwordConfirmation) throws UserNotFoundException, PasswordResetTokenNotValidException, PasswordConfirmationNotMatchException {
-        User user = userDao.findByPasswordResetToken(token);
+        T user = userDao.findByPasswordResetToken(token).orElse(null);
 
         if (user == null) {
             throw new UserNotFoundException();
@@ -134,7 +136,7 @@ public class UserService {
         }
     }
 
-    public void changePassword(User user, String password, String passwordConfirmation) throws PasswordConfirmationNotMatchException, ConstraintViolationException {
+    public void changePassword(T user, String password, String passwordConfirmation) throws PasswordConfirmationNotMatchException, ConstraintViolationException {
         if (!password.equals(passwordConfirmation)) {
             throw new PasswordConfirmationNotMatchException();
         }
@@ -150,7 +152,7 @@ public class UserService {
         }
     }
 
-    public void updateUser(User user) {
+    public void updateUser(T user) {
         userDao.save(user);
     }
 
@@ -158,8 +160,8 @@ public class UserService {
         userListeners.add(userListener);
     }
 
-    private void validateUser(User user) throws ConstraintViolationException {
-        Set<ConstraintViolation<User>> constraintViolations = validator.validate(user);
+    private void validateUser(T user) throws ConstraintViolationException {
+        Set<ConstraintViolation<T>> constraintViolations = validator.validate(user);
         if (!constraintViolations.isEmpty()) {
             throw new ConstraintViolationException(constraintViolations);
         }

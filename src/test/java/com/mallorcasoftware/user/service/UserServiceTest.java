@@ -21,6 +21,7 @@ import javax.validation.Validator;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Optional;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.*;
@@ -42,13 +43,13 @@ public class UserServiceTest extends BaseTest {
     @Mock
     private UserListener userListener;
 
-    private UserService userService;
+    private UserService<User> userService;
 
     @Override
     public void initMocks() {
         super.initMocks();
 
-        userService = new UserService(validator, userDao, passwordEncoder, tokenGenerator, 300);
+        userService = new UserService<User>(validator, userDao, passwordEncoder, tokenGenerator, 300);
         userService.addUserListener(userListener);
     }
 
@@ -58,7 +59,7 @@ public class UserServiceTest extends BaseTest {
         User user = new User();
         user.setUsername(expectedUsername);
 
-        when(userDao.findByUsername(expectedUsername)).thenReturn(user);
+        when(userDao.findByUsername(expectedUsername)).thenReturn(Optional.of(user));
 
         userService.createUser(user);
 
@@ -76,6 +77,7 @@ public class UserServiceTest extends BaseTest {
         when(user.getPassword()).thenReturn(expectedPassword);
         when(user.getPlainPassword()).thenReturn(expectedPassword);
         when(passwordEncoder.encode(expectedPassword)).thenReturn(expectedEncodedPassword);
+        when(userDao.findByUsername(expectedUsername)).thenReturn(Optional.empty());
 
         userService.createUser(user);
 
@@ -89,6 +91,7 @@ public class UserServiceTest extends BaseTest {
         User user = Mockito.mock(User.class);
 
         when(user.getUsername()).thenReturn(expectedUsername);
+        when(userDao.findByUsername(expectedUsername)).thenReturn(Optional.empty());
 
         userService.createUser(user);
 
@@ -100,6 +103,7 @@ public class UserServiceTest extends BaseTest {
         String expectedUsername = "testUsername";
         User user = Mockito.mock(User.class);
 
+        when(userDao.findByUsername(expectedUsername)).thenReturn(Optional.empty());
         when(user.getUsername()).thenReturn(expectedUsername);
 
         userService.createUser(user);
@@ -112,7 +116,7 @@ public class UserServiceTest extends BaseTest {
         Long expectedId = 12L;
         User expectedUser = Mockito.mock(User.class);
 
-        when(userDao.findById(expectedId)).thenReturn(expectedUser);
+        when(userDao.findById(expectedId)).thenReturn(Optional.of(expectedUser));
 
         User user = userService.findUser(expectedId);
 
@@ -125,7 +129,7 @@ public class UserServiceTest extends BaseTest {
         String expectedUsername = "testUsername";
         User expectedUser = Mockito.mock(User.class);
 
-        when(userDao.findByUsername(expectedUsername)).thenReturn(expectedUser);
+        when(userDao.findByUsername(expectedUsername)).thenReturn(Optional.of(expectedUser));
 
         User user = userService.findUser(expectedUsername);
 
@@ -138,7 +142,7 @@ public class UserServiceTest extends BaseTest {
         String expectedUsername = "testUsername";
         User expectedUser = Mockito.mock(User.class);
 
-        when(userDao.findByUsernameOrEmail(expectedUsername)).thenReturn(expectedUser);
+        when(userDao.findByUsernameOrEmail(expectedUsername)).thenReturn(Optional.of(expectedUser));
 
         User user = userService.findUserByUsernameOrEmail(expectedUsername);
 
@@ -149,6 +153,8 @@ public class UserServiceTest extends BaseTest {
     @Test(expected = UserNotFoundException.class)
     public void shouldThrowUserNotFoundExceptionOnRequestPasswordReset() throws UserNotFoundException {
         String usernameOrEmail = "testMail";
+
+        when(userDao.findByUsernameOrEmail(usernameOrEmail)).thenReturn(Optional.empty());
 
         userService.requestPasswordReset(usernameOrEmail);
 
@@ -162,7 +168,7 @@ public class UserServiceTest extends BaseTest {
         User expectedUser = Mockito.mock(User.class);
 
         when(expectedUser.getEmail()).thenReturn(usernameOrEmail);
-        when(userDao.findByUsernameOrEmail(usernameOrEmail)).thenReturn(expectedUser);
+        when(userDao.findByUsernameOrEmail(usernameOrEmail)).thenReturn(Optional.of(expectedUser));
         when(tokenGenerator.generateToken(usernameOrEmail)).thenReturn(expectedToken);
 
         userService.requestPasswordReset(usernameOrEmail);
@@ -180,7 +186,7 @@ public class UserServiceTest extends BaseTest {
         User expectedUser = Mockito.mock(User.class);
 
         when(expectedUser.getEmail()).thenReturn(usernameOrEmail);
-        when(userDao.findByUsernameOrEmail(usernameOrEmail)).thenReturn(expectedUser);
+        when(userDao.findByUsernameOrEmail(usernameOrEmail)).thenReturn(Optional.of(expectedUser));
         when(tokenGenerator.generateToken(usernameOrEmail)).thenReturn(expectedToken);
 
         userService.requestPasswordReset(usernameOrEmail);
@@ -193,6 +199,8 @@ public class UserServiceTest extends BaseTest {
         String token = "testToken";
         String password = "password";
         String passwordConfirmation = "password";
+
+        when(userDao.findByPasswordResetToken(token)).thenReturn(Optional.empty());
 
         userService.passwordReset(token, password, passwordConfirmation);
 
@@ -208,7 +216,7 @@ public class UserServiceTest extends BaseTest {
         User expectedUser = Mockito.mock(User.class);
 
         when(expectedUser.getPasswordResetToken()).thenReturn(wrongToken);
-        when(userDao.findByPasswordResetToken(token)).thenReturn(expectedUser);
+        when(userDao.findByPasswordResetToken(token)).thenReturn(Optional.of(expectedUser));
 
         userService.passwordReset(token, password, passwordConfirmation);
 
@@ -226,7 +234,7 @@ public class UserServiceTest extends BaseTest {
 
         when(expectedUser.getPasswordResetToken()).thenReturn(token);
         when(expectedUser.getPasswordRequestedAt()).thenReturn(passwordRequestedAt);
-        when(userDao.findByPasswordResetToken(token)).thenReturn(expectedUser);
+        when(userDao.findByPasswordResetToken(token)).thenReturn(Optional.of(expectedUser));
 
         userService.passwordReset(token, password, passwordConfirmation);
 
@@ -243,7 +251,7 @@ public class UserServiceTest extends BaseTest {
 
         when(expectedUser.getPasswordResetToken()).thenReturn(token);
         when(expectedUser.getPasswordRequestedAt()).thenReturn(passwordRequestedAt);
-        when(userDao.findByPasswordResetToken(token)).thenReturn(expectedUser);
+        when(userDao.findByPasswordResetToken(token)).thenReturn(Optional.of(expectedUser));
 
         userService.passwordReset(token, password, passwordConfirmation);
 
@@ -262,7 +270,7 @@ public class UserServiceTest extends BaseTest {
         when(expectedUser.getPlainPassword()).thenReturn(passwordConfirmation);
         when(expectedUser.getPasswordResetToken()).thenReturn(token);
         when(expectedUser.getPasswordRequestedAt()).thenReturn(passwordRequestedAt);
-        when(userDao.findByPasswordResetToken(token)).thenReturn(expectedUser);
+        when(userDao.findByPasswordResetToken(token)).thenReturn(Optional.of(expectedUser));
         when(passwordEncoder.encode(password)).thenReturn(encodedPassword);
 
         userService.passwordReset(token, password, passwordConfirmation);
@@ -284,7 +292,7 @@ public class UserServiceTest extends BaseTest {
         when(expectedUser.getPlainPassword()).thenReturn(passwordConfirmation);
         when(expectedUser.getPasswordResetToken()).thenReturn(token);
         when(expectedUser.getPasswordRequestedAt()).thenReturn(passwordRequestedAt);
-        when(userDao.findByPasswordResetToken(token)).thenReturn(expectedUser);
+        when(userDao.findByPasswordResetToken(token)).thenReturn(Optional.of(expectedUser));
         when(passwordEncoder.encode(password)).thenReturn(encodedPassword);
 
         userService.passwordReset(token, password, passwordConfirmation);
