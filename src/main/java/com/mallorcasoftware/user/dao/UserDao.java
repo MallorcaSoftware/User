@@ -16,10 +16,11 @@ public interface UserDao<T extends User> {
     /**
      * Fetches user by given username or given email
      *
-     * @param value given value
+     * @param username given username
+     * @param email    given email
      * @return user or null
      */
-    Optional<T> findByUsernameOrEmail(String value);
+    Optional<T> findByUsernameOrEmail(String username, String email);
 
     /**
      * Fetches user by given email.

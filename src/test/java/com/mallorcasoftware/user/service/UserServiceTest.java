@@ -142,23 +142,23 @@ public class UserServiceTest extends BaseTest {
         String expectedUsername = "testUsername";
         User expectedUser = Mockito.mock(User.class);
 
-        when(userDao.findByUsernameOrEmail(expectedUsername)).thenReturn(Optional.of(expectedUser));
+        when(userDao.findByUsernameOrEmail(expectedUsername, expectedUsername)).thenReturn(Optional.of(expectedUser));
 
         User user = userService.findUserByUsernameOrEmail(expectedUsername);
 
         assertEquals(expectedUser, user);
-        verify(userDao, times(1)).findByUsernameOrEmail(expectedUsername);
+        verify(userDao, times(1)).findByUsernameOrEmail(expectedUsername, expectedUsername);
     }
 
     @Test(expected = UserNotFoundException.class)
     public void shouldThrowUserNotFoundExceptionOnRequestPasswordReset() throws UserNotFoundException {
         String usernameOrEmail = "testMail";
 
-        when(userDao.findByUsernameOrEmail(usernameOrEmail)).thenReturn(Optional.empty());
+        when(userDao.findByUsernameOrEmail(usernameOrEmail, usernameOrEmail)).thenReturn(Optional.empty());
 
         userService.requestPasswordReset(usernameOrEmail);
 
-        verify(userDao, times(1)).findByUsernameOrEmail(usernameOrEmail);
+        verify(userDao, times(1)).findByUsernameOrEmail(usernameOrEmail, usernameOrEmail);
     }
 
     @Test
@@ -168,12 +168,12 @@ public class UserServiceTest extends BaseTest {
         User expectedUser = Mockito.mock(User.class);
 
         when(expectedUser.getEmail()).thenReturn(usernameOrEmail);
-        when(userDao.findByUsernameOrEmail(usernameOrEmail)).thenReturn(Optional.of(expectedUser));
+        when(userDao.findByUsernameOrEmail(usernameOrEmail, usernameOrEmail)).thenReturn(Optional.of(expectedUser));
         when(tokenGenerator.generateToken(usernameOrEmail)).thenReturn(expectedToken);
 
         userService.requestPasswordReset(usernameOrEmail);
 
-        verify(userDao, times(1)).findByUsernameOrEmail(usernameOrEmail);
+        verify(userDao, times(1)).findByUsernameOrEmail(usernameOrEmail, usernameOrEmail);
         verify(tokenGenerator, times(1)).generateToken(usernameOrEmail);
         verify(expectedUser, times(1)).setPasswordResetToken(expectedToken);
         verify(userDao, times(1)).saveUser(expectedUser);
@@ -186,7 +186,7 @@ public class UserServiceTest extends BaseTest {
         User expectedUser = Mockito.mock(User.class);
 
         when(expectedUser.getEmail()).thenReturn(usernameOrEmail);
-        when(userDao.findByUsernameOrEmail(usernameOrEmail)).thenReturn(Optional.of(expectedUser));
+        when(userDao.findByUsernameOrEmail(usernameOrEmail, usernameOrEmail)).thenReturn(Optional.of(expectedUser));
         when(tokenGenerator.generateToken(usernameOrEmail)).thenReturn(expectedToken);
 
         userService.requestPasswordReset(usernameOrEmail);

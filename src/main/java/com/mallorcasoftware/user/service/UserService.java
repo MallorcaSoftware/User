@@ -82,11 +82,11 @@ public class UserService<T extends User> {
     }
 
     public T findUserByUsernameOrEmail(String value) {
-        return userDao.findByUsernameOrEmail(value).orElse(null);
+        return userDao.findByUsernameOrEmail(value, value).orElse(null);
     }
 
     public void requestPasswordReset(String usernameOrEmail) throws UserNotFoundException {
-        T user = userDao.findByUsernameOrEmail(usernameOrEmail).orElse(null);
+        T user = userDao.findByUsernameOrEmail(usernameOrEmail, usernameOrEmail).orElse(null);
 
         if (user == null) {
             throw new UserNotFoundException();
