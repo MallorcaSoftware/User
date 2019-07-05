@@ -48,8 +48,8 @@ public interface UserDao<T extends User> {
     /**
      * Saves the given user
      *
-     * @param user the user to save
+     * @param user the user to saveUser
      * @return user or null
      */
-    T save(T user);
+    T saveUser(T user);
 }

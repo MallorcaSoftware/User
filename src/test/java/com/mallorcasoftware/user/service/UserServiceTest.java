@@ -95,7 +95,7 @@ public class UserServiceTest extends BaseTest {
 
         userService.createUser(user);
 
-        verify(userDao, times(1)).save(user);
+        verify(userDao, times(1)).saveUser(user);
     }
 
     @Test
@@ -176,7 +176,7 @@ public class UserServiceTest extends BaseTest {
         verify(userDao, times(1)).findByUsernameOrEmail(usernameOrEmail);
         verify(tokenGenerator, times(1)).generateToken(usernameOrEmail);
         verify(expectedUser, times(1)).setPasswordResetToken(expectedToken);
-        verify(userDao, times(1)).save(expectedUser);
+        verify(userDao, times(1)).saveUser(expectedUser);
     }
 
     @Test
@@ -277,7 +277,7 @@ public class UserServiceTest extends BaseTest {
 
         verify(expectedUser, times(1)).setPassword(encodedPassword);
         verify(userDao, times(1)).findByPasswordResetToken(token);
-        verify(userDao, times(1)).save(expectedUser);
+        verify(userDao, times(1)).saveUser(expectedUser);
     }
 
     @Test
@@ -299,7 +299,7 @@ public class UserServiceTest extends BaseTest {
 
         verify(expectedUser, times(1)).setPassword(encodedPassword);
         verify(userDao, times(1)).findByPasswordResetToken(token);
-        verify(userDao, times(1)).save(expectedUser);
+        verify(userDao, times(1)).saveUser(expectedUser);
         verify(userListener, times(1)).onPasswordReset(any(PasswordResetEvent.class));
     }
 
@@ -326,7 +326,7 @@ public class UserServiceTest extends BaseTest {
 
         verify(user, times(1)).setPlainPassword(passwordConfirmation);
         verify(user, times(1)).setPassword(encodedPassword);
-        verify(userDao, times(1)).save(user);
+        verify(userDao, times(1)).saveUser(user);
     }
 
     @Test
@@ -335,6 +335,6 @@ public class UserServiceTest extends BaseTest {
 
         userService.updateUser(expectedUser);
 
-        verify(userDao, times(1)).save(expectedUser);
+        verify(userDao, times(1)).saveUser(expectedUser);
     }
 }
