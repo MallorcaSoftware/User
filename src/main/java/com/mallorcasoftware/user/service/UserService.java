@@ -10,23 +10,21 @@ import com.mallorcasoftware.user.exception.PasswordResetTokenNotValidException;
 import com.mallorcasoftware.user.exception.UserAlreadyExistException;
 import com.mallorcasoftware.user.exception.UserNotFoundException;
 import com.mallorcasoftware.user.listener.UserListener;
+import com.mallorcasoftware.user.model.CreateUser;
 import com.mallorcasoftware.user.model.User;
 import com.mallorcasoftware.user.service.encoder.PasswordEncoder;
 import com.mallorcasoftware.user.service.token.TokenGenerator;
+import com.mallorcasoftware.user.service.validator.UserValidator;
 
-import javax.validation.ConstraintViolation;
-import javax.validation.ConstraintViolationException;
-import javax.validation.Validator;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.Set;
 
 public class UserService<T extends User> {
 
-    private Validator validator;
-
     private UserDao<T> userDao;
+
+    private UserValidator userValidator;
 
     private PasswordEncoder passwordEncoder;
 
@@ -36,18 +34,17 @@ public class UserService<T extends User> {
 
     private List<UserListener> userListeners = new ArrayList<UserListener>();
 
-    public UserService(Validator validator, UserDao<T> userDao, PasswordEncoder passwordEncoder,
+    public UserService(UserDao<T> userDao, UserValidator userValidator, PasswordEncoder passwordEncoder,
                        TokenGenerator tokenGenerator, Integer passwordResetTokenTtl) {
-        this.validator = validator;
         this.userDao = userDao;
+        this.userValidator = userValidator;
         this.passwordEncoder = passwordEncoder;
         this.tokenGenerator = tokenGenerator;
         this.passwordResetTokenTtl = passwordResetTokenTtl;
     }
 
-    public UserService(Validator validator, UserDao<T> userDao, PasswordEncoder passwordEncoder,
+    public UserService(UserDao<T> userDao, PasswordEncoder passwordEncoder,
                        TokenGenerator tokenGenerator, Integer passwordResetTokenTtl, List<UserListener> userListeners) {
-        this.validator = validator;
         this.userDao = userDao;
         this.passwordEncoder = passwordEncoder;
         this.tokenGenerator = tokenGenerator;
@@ -55,22 +52,22 @@ public class UserService<T extends User> {
         this.userListeners = userListeners;
     }
 
-    public T createUser(T user) throws UserAlreadyExistException, ConstraintViolationException {
-        if (userDao.findByUsername(user.getUsername()).isPresent()) {
+    public T createUser(CreateUser<T> createUser) throws UserAlreadyExistException {
+        if (userDao.findByUsername(createUser.getUser().getUsername()).isPresent()) {
             throw new UserAlreadyExistException();
         }
 
-        validateUser(user);
+        userValidator.validatePassword(createUser.getPlainPassword());
 
-        user.setPassword(passwordEncoder.encode(user.getPlainPassword()));
+        createUser.getUser().setPassword(passwordEncoder.encode(createUser.getPlainPassword()));
 
-        userDao.saveUser(user);
+        userDao.saveUser(createUser.getUser());
 
         for (UserListener userListener : userListeners) {
-            userListener.onCreateUser(new UserCreatedEvent(user));
+            userListener.onCreateUser(new UserCreatedEvent(createUser.getUser()));
         }
 
-        return user;
+        return createUser.getUser();
     }
 
     public T findUser(Long id) {
@@ -124,10 +121,8 @@ public class UserService<T extends User> {
             throw new PasswordConfirmationNotMatchException();
         }
 
-        user.setPlainPassword(passwordConfirmation);
-
-        validateUser(user);
-        user.setPassword(passwordEncoder.encode(user.getPlainPassword()));
+        userValidator.validatePassword(passwordConfirmation);
+        user.setPassword(passwordEncoder.encode(passwordConfirmation));
 
         userDao.saveUser(user);
 
@@ -136,14 +131,13 @@ public class UserService<T extends User> {
         }
     }
 
-    public void changePassword(T user, String password, String passwordConfirmation) throws PasswordConfirmationNotMatchException, ConstraintViolationException {
+    public void changePassword(T user, String password, String passwordConfirmation) throws PasswordConfirmationNotMatchException {
         if (!password.equals(passwordConfirmation)) {
             throw new PasswordConfirmationNotMatchException();
         }
 
-        user.setPlainPassword(passwordConfirmation);
-        validateUser(user);
-        user.setPassword(passwordEncoder.encode(user.getPlainPassword()));
+        userValidator.validatePassword(passwordConfirmation);
+        user.setPassword(passwordEncoder.encode(passwordConfirmation));
 
         userDao.saveUser(user);
 
@@ -158,12 +152,5 @@ public class UserService<T extends User> {
 
     public void addUserListener(UserListener userListener) {
         userListeners.add(userListener);
-    }
-
-    private void validateUser(T user) throws ConstraintViolationException {
-        Set<ConstraintViolation<T>> constraintViolations = validator.validate(user);
-        if (!constraintViolations.isEmpty()) {
-            throw new ConstraintViolationException(constraintViolations);
-        }
     }
 }

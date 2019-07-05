@@ -10,14 +10,15 @@ import com.mallorcasoftware.user.exception.PasswordResetTokenNotValidException;
 import com.mallorcasoftware.user.exception.UserAlreadyExistException;
 import com.mallorcasoftware.user.exception.UserNotFoundException;
 import com.mallorcasoftware.user.listener.UserListener;
+import com.mallorcasoftware.user.model.CreateUser;
 import com.mallorcasoftware.user.model.User;
 import com.mallorcasoftware.user.service.encoder.PasswordEncoder;
 import com.mallorcasoftware.user.service.token.TokenGenerator;
+import com.mallorcasoftware.user.service.validator.UserValidator;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 
-import javax.validation.Validator;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -29,10 +30,10 @@ import static org.mockito.Mockito.*;
 public class UserServiceTest extends BaseTest {
 
     @Mock
-    private Validator validator;
+    private UserDao userDao;
 
     @Mock
-    private UserDao userDao;
+    private UserValidator userValidator;
 
     @Mock
     private PasswordEncoder passwordEncoder;
@@ -49,21 +50,21 @@ public class UserServiceTest extends BaseTest {
     public void initMocks() {
         super.initMocks();
 
-        userService = new UserService<User>(validator, userDao, passwordEncoder, tokenGenerator, 300);
+        userService = new UserService<User>(userDao, userValidator, passwordEncoder, tokenGenerator, 300);
         userService.addUserListener(userListener);
     }
 
     @Test(expected = UserAlreadyExistException.class)
     public void shouldThrowUserAlreadyExistExceptionIfCreatesDuplicateUser() throws UserAlreadyExistException {
         String expectedUsername = "testUsername";
-        User user = new User();
-        user.setUsername(expectedUsername);
+        User user = Mockito.mock(User.class);
 
+        when(user.getUsername()).thenReturn(expectedUsername);
         when(userDao.findByUsername(expectedUsername)).thenReturn(Optional.of(user));
 
-        userService.createUser(user);
+        userService.createUser(new CreateUser<>(user, ""));
 
-        verify(userDao, times(1)).findByUsername(expectedUsername);
+        verify(userDao).findByUsername(expectedUsername);
     }
 
     @Test
@@ -72,17 +73,17 @@ public class UserServiceTest extends BaseTest {
         String expectedPassword = "testPassword";
         String expectedEncodedPassword = "encodedPassword";
         User user = Mockito.mock(User.class);
+        CreateUser<User> createUser = new CreateUser<>(user, expectedPassword);
 
         when(user.getUsername()).thenReturn(expectedUsername);
-        when(user.getPassword()).thenReturn(expectedPassword);
-        when(user.getPlainPassword()).thenReturn(expectedPassword);
         when(passwordEncoder.encode(expectedPassword)).thenReturn(expectedEncodedPassword);
         when(userDao.findByUsername(expectedUsername)).thenReturn(Optional.empty());
 
-        userService.createUser(user);
+        userService.createUser(createUser);
 
-        verify(passwordEncoder, times(1)).encode(expectedPassword);
-        verify(user, times(1)).setPassword(expectedEncodedPassword);
+        verify(userValidator).validatePassword(expectedPassword);
+        verify(passwordEncoder).encode(expectedPassword);
+        verify(user).setPassword(expectedEncodedPassword);
     }
 
     @Test
@@ -93,9 +94,9 @@ public class UserServiceTest extends BaseTest {
         when(user.getUsername()).thenReturn(expectedUsername);
         when(userDao.findByUsername(expectedUsername)).thenReturn(Optional.empty());
 
-        userService.createUser(user);
+        userService.createUser(new CreateUser<>(user, "expectedPassword"));
 
-        verify(userDao, times(1)).saveUser(user);
+        verify(userDao).saveUser(user);
     }
 
     @Test
@@ -106,7 +107,7 @@ public class UserServiceTest extends BaseTest {
         when(userDao.findByUsername(expectedUsername)).thenReturn(Optional.empty());
         when(user.getUsername()).thenReturn(expectedUsername);
 
-        userService.createUser(user);
+        userService.createUser(new CreateUser<>(user, "expectedPassword"));
 
         verify(userListener, times(1)).onCreateUser(any(UserCreatedEvent.class));
     }
@@ -267,7 +268,6 @@ public class UserServiceTest extends BaseTest {
         Date passwordRequestedAt = new Date();
         User expectedUser = Mockito.mock(User.class);
 
-        when(expectedUser.getPlainPassword()).thenReturn(passwordConfirmation);
         when(expectedUser.getPasswordResetToken()).thenReturn(token);
         when(expectedUser.getPasswordRequestedAt()).thenReturn(passwordRequestedAt);
         when(userDao.findByPasswordResetToken(token)).thenReturn(Optional.of(expectedUser));
@@ -289,7 +289,6 @@ public class UserServiceTest extends BaseTest {
         Date passwordRequestedAt = new Date();
         User expectedUser = Mockito.mock(User.class);
 
-        when(expectedUser.getPlainPassword()).thenReturn(passwordConfirmation);
         when(expectedUser.getPasswordResetToken()).thenReturn(token);
         when(expectedUser.getPasswordRequestedAt()).thenReturn(passwordRequestedAt);
         when(userDao.findByPasswordResetToken(token)).thenReturn(Optional.of(expectedUser));
@@ -319,12 +318,10 @@ public class UserServiceTest extends BaseTest {
         String passwordConfirmation = "password";
         String encodedPassword = "encodedPassword";
 
-        when(user.getPlainPassword()).thenReturn(passwordConfirmation);
         when(passwordEncoder.encode(password)).thenReturn(encodedPassword);
 
         userService.changePassword(user, password, passwordConfirmation);
 
-        verify(user, times(1)).setPlainPassword(passwordConfirmation);
         verify(user, times(1)).setPassword(encodedPassword);
         verify(userDao, times(1)).saveUser(user);
     }

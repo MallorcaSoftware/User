@@ -1,89 +1,34 @@
 package com.mallorcasoftware.user.model;
 
-import com.mallorcasoftware.user.validation.constraints.ValidPassword;
-
 import java.util.Date;
 import java.util.Locale;
 
-public class User {
-    private long id;
+public interface User {
+    long getId();
 
-    private String username;
+    void setId(long id);
 
-    private String email;
+    String getUsername();
 
-    private String password;
+    void setUsername(String username);
 
-    @ValidPassword
-    private String plainPassword;
+    String getEmail();
 
-    private String passwordResetToken;
+    void setEmail(String email);
 
-    private Date passwordRequestedAt;
+    String getPassword();
 
-    private Locale locale;
+    void setPassword(String password);
 
-    public long getId() {
-        return id;
-    }
+    String getPasswordResetToken();
 
-    public void setId(long id) {
-        this.id = id;
-    }
+    void setPasswordResetToken(String passwordResetToken);
 
-    public String getUsername() {
-        return username;
-    }
+    Date getPasswordRequestedAt();
 
-    public void setUsername(String username) {
-        this.username = username;
-    }
+    void setPasswordRequestedAt(Date passwordRequestedAt);
 
-    public String getEmail() {
-        return email;
-    }
+    Locale getLocale();
 
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
-    }
-
-    public String getPlainPassword() {
-        return plainPassword;
-    }
-
-    public void setPlainPassword(String plainPassword) {
-        this.plainPassword = plainPassword;
-    }
-
-    public String getPasswordResetToken() {
-        return passwordResetToken;
-    }
-
-    public void setPasswordResetToken(String passwordResetToken) {
-        this.passwordResetToken = passwordResetToken;
-    }
-
-    public Date getPasswordRequestedAt() {
-        return passwordRequestedAt;
-    }
-
-    public void setPasswordRequestedAt(Date passwordRequestedAt) {
-        this.passwordRequestedAt = passwordRequestedAt;
-    }
-
-    public Locale getLocale() {
-        return locale;
-    }
-
-    public void setLocale(Locale locale) {
-        this.locale = locale;
-    }
+    void setLocale(Locale locale);
 }
