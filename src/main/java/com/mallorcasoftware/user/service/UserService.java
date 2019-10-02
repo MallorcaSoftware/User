@@ -61,7 +61,7 @@ public class UserService<T extends User> {
 
         createUser.getUser().setPassword(passwordEncoder.encode(createUser.getPlainPassword()));
 
-        userDao.saveUser(createUser.getUser());
+        userDao.save(createUser.getUser());
 
         for (UserListener userListener : userListeners) {
             userListener.onCreateUser(new UserCreatedEvent(createUser.getUser()));
@@ -92,7 +92,7 @@ public class UserService<T extends User> {
         user.setPasswordResetToken(tokenGenerator.generateToken(user.getEmail()));
         user.setPasswordRequestedAt(new Date());
 
-        userDao.saveUser(user);
+        userDao.save(user);
 
         for (UserListener userListener : userListeners) {
             userListener.onRequestPasswordReset(new RequestPasswordResetEvent(user));
@@ -124,7 +124,7 @@ public class UserService<T extends User> {
         userValidator.validatePassword(passwordConfirmation);
         user.setPassword(passwordEncoder.encode(passwordConfirmation));
 
-        userDao.saveUser(user);
+        userDao.save(user);
 
         for (UserListener userListener : userListeners) {
             userListener.onPasswordReset(new PasswordResetEvent(user));
@@ -139,7 +139,7 @@ public class UserService<T extends User> {
         userValidator.validatePassword(passwordConfirmation);
         user.setPassword(passwordEncoder.encode(passwordConfirmation));
 
-        userDao.saveUser(user);
+        userDao.save(user);
 
         for (UserListener userListener : userListeners) {
             userListener.onChangePassword(new PasswordChangedEvent(user));
@@ -147,7 +147,7 @@ public class UserService<T extends User> {
     }
 
     public void updateUser(T user) {
-        userDao.saveUser(user);
+        userDao.save(user);
     }
 
     public void addUserListener(UserListener userListener) {

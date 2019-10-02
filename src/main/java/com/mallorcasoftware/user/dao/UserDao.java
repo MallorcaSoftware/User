@@ -52,5 +52,5 @@ public interface UserDao<T extends User> {
      * @param user the user to saveUser
      * @return user or null
      */
-    T saveUser(T user);
+    <S extends T> S save(S user);
 }
