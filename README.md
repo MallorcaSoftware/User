@@ -1,4 +1,6 @@
 # User
+[![Build Status](https://travis-ci.org/MallorcaSoftware/User.svg?branch=master)](https://travis-ci.org/MallorcaSoftware/User)
+
 This library provides an abstract user management system.
 
 ## Installation
